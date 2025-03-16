@@ -11,7 +11,6 @@ import (
 const (
 	X_GitHub_Api_Version = "2022-11-28"
 	Accept               = "application/vnd.github+json"
-	token                = ""
 )
 
 type GithubClient struct {
