@@ -11,6 +11,7 @@ import (
 const (
 	X_GitHub_Api_Version = "2022-11-28"
 	Accept               = "application/vnd.github+json"
+	token                = "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"
 )
 
 type GithubClient struct {
@@ -62,23 +63,48 @@ func (g *GithubClient) GetPendingReviewCommits(ctx context.Context, prId int) ([
 	if err != nil {
 		return nil, err
 	}
+	// fmt.Print(commits)
 
 	var pendingReviewCommits []*github.RepositoryCommit
 	for _, commit := range commits {
 		if strings.HasPrefix(*commit.Commit.Message, "Merge pull request") {
 			continue
 		}
+
 		commitInfo, _, err := g.Client.Repositories.GetCommit(ctx, g.Owner, g.Repo, *commit.SHA, nil)
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println(commitInfo.Files)
-		fmt.Println("(-------------)")
-
 		pendingReviewCommits = append(pendingReviewCommits, commitInfo)
+		fmt.Println(commitInfo.Files)
+		fmt.Println("----------")
 	}
 	// fmt.Println(pendingReviewCommits)
 	return pendingReviewCommits, nil
+}
+
+func (g *GithubClient) GetPullRequestFiles(ctx context.Context, pullNum int) error {
+
+	fileList, _, err := g.Client.PullRequests.ListFiles(ctx, g.Owner, g.Repo, pullNum, nil)
+	if err != nil {
+		return err
+	}
+	for _, v := range fileList {
+		// g.Client.Repositories.GetContents()
+		g.Client.Repositories.CompareCommits()
+		fmt.Println(*v.SHA)
+		// sha := v.GetSHA()[:7]
+		fileContent, _, _, err := g.Client.Repositories.GetContents(ctx, g.Owner, g.Repo, *v.Filename, nil)
+		if err != nil {
+			return err
+		}
+		content, err := fileContent.GetContent()
+		if err != nil {
+			return err
+		}
+		fmt.Print(content)
+	}
+	return nil
 }
 
 // 创建评论
